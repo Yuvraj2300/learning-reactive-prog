@@ -1,6 +1,7 @@
 package com.demo.webflux.functional.endpoint;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.RequestPredicate;
@@ -18,24 +19,41 @@ public class StudentRouterHandlerCombined {
 	@Autowired
 	private SpringMongoRepository repo;
 
-	RouterFunction<ServerResponse> returnStudentWithCombine() {
+	@Bean
+	protected RouterFunction<ServerResponse> getOneStudent(){
 		
-		HandlerFunction<ServerResponse> studentHandler	=	
-				serverRequest	->	{
-					int	rollNo	=	getInt(serverRequest.pathVariable("rollNo"));
-					return	ServerResponse.ok().
-							body(repo.findByRollNo(rollNo),
-									Student.class);
+		HandlerFunction<ServerResponse> studentHandler	=
+				request	->{
+					int	rollNo	=	getInt(request.pathVariable("rollNo"));
+					return	ServerResponse.ok().body(repo.findByRollNo(rollNo),Student.class);
 				};
 				
-		RouterFunction<ServerResponse> studentResponse	=
-				RouterFunctions.route(
-						RequestPredicates.GET("/api/f/combine/getStudent/{rollNo}"),
-							studentHandler
-						);
-		
-		return studentResponse;
+		RouterFunction<ServerResponse> response	=	
+					RouterFunctions.route(
+							RequestPredicates.GET("/api/f/combine/getStudent/{rollNo}"),
+									studentHandler
+							);
+				
+		return response;
 	}
+	
+	protected	RouterFunction<ServerResponse> getAllStudents(){
+		HandlerFunction<ServerResponse> studentHandler	=
+				request	->	{
+					return	ServerResponse.ok().
+							body(repo.findAll(),Student.class);
+				};
+				
+				
+		RouterFunction<ServerResponse> router	=
+				RouterFunctions.route(
+						RequestPredicates.GET("/api/f/combine/students"),
+				studentHandler);
+	
+		return	 router;
+	}
+	
+	
 
 	private int getInt(String value) {
 		int returnVal = 0;
